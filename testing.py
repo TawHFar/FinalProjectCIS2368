@@ -44,6 +44,39 @@ def add_book():
 
     return "Book added successfully"
 
+#crud function to updating a book
+@app.route('/api/book/<int:id>', methods = ['PUT'])
+def update_book():
+    request_data = request.get_json()
+    book_id = request_data['id']
+    update_title = request_data['title']
+    update_author = request_data['author']
+    update_genre = request_data['genre']
+    update_status = request_data['status']
+
+    #used chatgpt to figure out how to update different parts of the record
+    query = "UPDATE books SET"
+    values = []
+
+    if update_title: 
+        query += "title = %s"
+        values.append(update_title)
+    if update_author: 
+        query += "author = %s"
+        values.append(update_author)
+    if update_genre: 
+        query += "genre = %s"
+        values.append(update_genre)
+    if update_status: 
+        query += "status = %s"
+        values.append(update_status)
+    
+    query += "WHERE id = %s"
+    values.append(book_id)
+
+    execute_query(conn, query, tuple(values))
+
+    return "Book Updated"
 
 @app.route('/api/books/delete', methods=['DELETE'])
 def delete_book():
@@ -93,6 +126,39 @@ def add_customer():
     execute_query(conn, new_entry, values)
 
     return "Profile added successfully"
+
+@app.route('/api/customer/<int:id>', methods = ['PUT'])
+def update_customer():
+    request_data = request.get_json()
+    cust_id = request_data['id']
+    update_firstname = request_data['firstname']
+    update_lastname = request_data['lastname']
+    update_email = request_data['email']
+    update_passwordhash = request_data['passwordhash']
+
+    #used chatgpt to figure out how to update different parts of the record
+    query = "UPDATE books SET"
+    values = []
+
+    if update_firstname: 
+        query += "firstname = %s"
+        values.append(update_firstname)
+    if update_lastname: 
+        query += "lastname = %s"
+        values.append(update_lastname)
+    if update_email: 
+        query += "email = %s"
+        values.append(update_email)
+    if update_passwordhash: 
+        query += "passwordhash = %s"
+        values.append(update_passwordhash)
+    
+    query += "WHERE id = %s"
+    values.append(cust_id)
+
+    execute_query(conn, query, tuple(values))
+
+    return "Customer Updated"
 
 
 @app.route('/api/customer/delete', methods=['DELETE'])
