@@ -217,3 +217,37 @@ def borrow_book():
     execute_query(conn,update_status,new_values)
 
     return "Book Borrowed Successfully!"
+
+@app.route('/return_date', methods =['PUT'])
+def return_book(id):
+    request_data = request.get_json()
+    borrow_id = request_data['id']
+    return_date_str = request_data['returndate']
+
+    return_date = datetime.strptime(return_date_str, '%Y-%m-%d')
+
+    select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = {id}"
+    borrow_result = execute_read_query(conn, select_query)
+
+    if not borrow_result:
+        return jsonify({"Borrow record not found"})
+    
+    borrow_date_str = borrow_date[0]['borrowdate']
+    borrow_date = datetime.strptime(borrow_date_str, '%Y-%m-%d')
+#calculate the difference in days 
+    day_difference = (return_date - borrow_date).days
+
+    late_fee = 0
+    if day_difference > 10: 
+        late_fee = day_difference - 10
+
+    update_query  =f""" 
+    UPDATE borrowingrecords 
+    SET returndate = '{return_date_str}', latefee = {late_fee}
+    WHERE id  = {id}
+    """
+    execute_query(conn, update_query)
+
+    return jsonify ({"Return Date updated"})
+
+app.run()
