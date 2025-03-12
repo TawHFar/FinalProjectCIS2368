@@ -34,7 +34,6 @@ def add_book():
     genre = request_data['genre']
     status = request_data['status']
 
-
     new_entry = """
         INSERT INTO inventory (title, author, genre, status) 
         VALUES (%s, %s, %s, %s, %s, %s)"""
@@ -44,6 +43,24 @@ def add_book():
     execute_query(conn, new_entry, values)
 
     return "Book added successfully"
+
+
+@app.route('/api/books/delete', methods=['DELETE'])
+def delete_book():
+    request_data = request.get_json()
+    customer_id = request_data['id']
+    result = execute_read_query(conn, query, customer_id)
+
+    if not result:
+        "Customer not in inventory"
+
+
+    query = "SELECT  FROM books WHERE id = %s"
+    values = (customer_id,)
+
+    execute_query(conn, query, values)
+    return "Books deleted succesfully"
+
 
 
 
@@ -76,3 +93,20 @@ def add_customer():
     execute_query(conn, new_entry, values)
 
     return "Profile added successfully"
+
+
+@app.route('/api/customer/delete', methods=['DELETE'])
+def delete_customer(id):
+    request_data = request.get_json()
+    book_id = request_data['id']
+    result = execute_read_query(conn, query, book_id)
+
+    if not result:
+        "Book not in inventory"
+
+
+    query = "SELECT  FROM books WHERE id = %s"
+    values = (id,)
+
+    execute_query(conn, query, values)
+    return "Customer deleted succesfully"
