@@ -1,10 +1,12 @@
 import flask
 import cred
+import datetime
 from sql import create_connection
 from sql import execute_read_query
 from sql import execute_query #added this import to have access add and delete to query
 from flask import jsonify
 from flask import request
+
 
 app = flask.Flask(__name__) #sets up the application
 app.config["DEBUG"] = True #allow to show errors in browser
@@ -176,3 +178,42 @@ def delete_customer(id):
 
     execute_query(conn, query, values)
     return "Customer deleted succesfully"
+
+
+
+#Using table borrowrecords to allow user to check out a book
+@app.route('/api/borrow', methods=['POST'])
+def borrow_book():
+    request_data = request.get_json()
+    book_id = request_data['bookid']
+    cust_id = request_data['customerid']
+    borrow_date = request_data['borrowdate']
+    format_date = datetime.strptime(borrow_date, '%Y-%m-%d')
+
+    #Checks status book if available to check out
+    book_query = 'SELECT status FROM books WHERE id=%s'
+    book_value = (book_id,)
+    check_query = execute_read_query(conn, book_query, book_value)
+
+    if check_query != 'available':
+        return "Book unavailable."
+    
+    #Checks if customer is in borrowing records and confirms if they are able to borrow book
+    borrow_query = 'SELECT * FROM borrowingrecords WHERE book_id=%s AND customerid=%s AND returndate is NULL'
+    cust_value = (book_id,cust_id)
+    check_cust = execute_read_query(conn, borrow_query, cust_value)
+
+    if check_cust:
+        return "Customer has already borrowed a book."
+    
+    #Inserted information of the checkout 
+    new_borrowquery = """INSERT INTO borrowrecords (bookid,custimerid,borrowdate) VALUES %s,%s,%s"""
+    new_values = (book_id,cust_id,format_date)
+    execute_query(conn, new_borrowquery, new_values)
+
+    #Upated book status
+    update_status = "UPDATE books SET status ='unavailable' WHERE id=%s"
+    new_values = (book_id,)
+    execute_query(conn,update_status,new_values)
+
+    return "Book Borrowed Successfully!"
