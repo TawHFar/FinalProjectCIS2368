@@ -200,7 +200,7 @@ def borrow_book():
     
     #Checks if customer is in borrowing records and confirms if they are able to borrow book
     borrow_query = 'SELECT * FROM borrowingrecords WHERE customerid=%s AND returndate is NULL'
-    cust_value = (book_id,cust_id)
+    cust_value = (cust_id)
     check_cust = execute_read_query(conn, borrow_query, cust_value)
 
     if check_cust:
