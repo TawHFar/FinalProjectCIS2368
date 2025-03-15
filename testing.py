@@ -37,14 +37,15 @@ def add_book():
     status = request_data['status']
 
     new_entry = """
-        INSERT INTO inventory (title, author, genre, status) 
-        VALUES (%s, %s, %s, %s, %s, %s)"""
+        INSERT INTO books (title, author, genre, status) 
+        VALUES (%s, %s, %s, %s)"""
     
-    values = (title, author, genre, status)
+    values = (title, author, genre, status,)
     
     execute_query(conn, new_entry, values)
 
     return "Book added successfully"
+
 
 #crud function to updating a book
 @app.route('/api/book/<int:id>', methods = ['PUT'])
@@ -83,15 +84,15 @@ def update_book():
 @app.route('/api/books/delete', methods=['DELETE'])
 def delete_book():
     request_data = request.get_json()
-    customer_id = request_data['id']
-    result = execute_read_query(conn, query, customer_id)
+    book_id = request_data['id']
+    result = execute_read_query(conn, query, book_id)
 
     if not result:
-        "Customer not in inventory"
+        "Book not in inventory"
 
 
     query = "SELECT  FROM books WHERE id = %s"
-    values = (customer_id,)
+    values = (book_id,)
 
     execute_query(conn, query, values)
     return "Books deleted succesfully"
@@ -166,14 +167,14 @@ def update_customer():
 @app.route('/api/customer/delete', methods=['DELETE'])
 def delete_customer(id):
     request_data = request.get_json()
-    book_id = request_data['id']
-    result = execute_read_query(conn, query, book_id)
+    customer_id = request_data['id']
+    result = execute_read_query(conn, query, customer_id)
 
     if not result:
-        "Book not in inventory"
+        "Customer does not exist"
 
 
-    query = "SELECT  FROM books WHERE id = %s"
+    query = "SELECT  FROM customers WHERE id = %s"
     values = (id,)
 
     execute_query(conn, query, values)
@@ -217,3 +218,37 @@ def borrow_book():
     execute_query(conn,update_status,new_values)
 
     return "Book Borrowed Successfully!"
+
+@app.route('/return_date', methods =['PUT'])
+def return_book(id):
+    request_data = request.get_json()
+    borrow_id = request_data['id']
+    return_date_str = request_data['returndate']
+
+    return_date = datetime.strptime(return_date_str, '%Y-%m-%d')
+
+    select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = {id}"
+    borrow_result = execute_read_query(conn, select_query)
+
+    if not borrow_result:
+        return jsonify({"Borrow record not found"})
+    
+    borrow_date_str = borrow_date[0]['borrowdate']
+    borrow_date = datetime.strptime(borrow_date_str, '%Y-%m-%d')
+#calculate the difference in days 
+    day_difference = (return_date - borrow_date).days
+
+    late_fee = 0
+    if day_difference > 10: 
+        late_fee = day_difference - 10
+
+    update_query  =f""" 
+    UPDATE borrowingrecords 
+    SET returndate = '{return_date_str}', latefee = {late_fee}
+    WHERE id  = {id}
+    """
+    execute_query(conn, update_query)
+
+    return jsonify ({"Return Date updated"})
+
+app.run()

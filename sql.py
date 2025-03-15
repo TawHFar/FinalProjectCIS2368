@@ -15,21 +15,31 @@ def create_connection(host_name, user_name, user_password, db_name):
         print(f"The error {e} ocurred.")
     return connection
 
-def execute_query(connection, query):
+def execute_query(connection,query, values= None): #Chatgpt used to add parameter
     cursor = connection.cursor()
-    try:
-        cursor.execute(query)
+    try: 
+        if values:
+            cursor.execute(query,values)
+        else:
+            cursor.execute(query,values)
         connection.commit()
-        print("Query executed successfully")
+        print("Query executed succesfully")
     except Error as e:
-        print(f"The error {e} ocurred.")
+        print(f'The error {e} occured.')
 
-def execute_read_query(connection, query):
+
+def execute_read_query(connection,query, values= None):
     cursor = connection.cursor(dictionary=True)
     result = None
     try:
-        cursor.execute(query)
-        result = cursor.fetchall()
-        return result
+         #Added parameters to read more parameters
+         if values:
+            cursor.execute(query,values)
+            result = cursor.fetchall()
+            return result
+         else:
+            cursor.execute(query,values)
+            result = cursor.fetchall()
+            return result      
     except Error as e:
-        print(f"The error {e} ocurred.")
+        print(f'The error {e} occured.')
