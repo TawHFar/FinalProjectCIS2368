@@ -40,7 +40,7 @@ def add_book():
         INSERT INTO books (title, author, genre, status) 
         VALUES (%s, %s, %s, %s)"""
     
-    values = (title, author, genre, status,)
+    values = (title, author, genre, status)
     
     execute_query(conn, new_entry, values)
 
@@ -104,7 +104,7 @@ def delete_book():
 # Using class notes, use GET functipn to retrieve all barbells
 @app.route('/api/customers', methods=['GET'])
 def get_customer():
-    query = "SELECT * FROM customer"
+    query = "SELECT * FROM customers"
     customer = execute_read_query(conn, query)
     return jsonify(customer)
 
@@ -121,7 +121,7 @@ def add_customer():
 
 
     new_entry = """
-        INSERT INTO inventory (firstname, lastname, email, passwordhash) 
+        INSERT INTO customers (firstname, lastname, email, passwordhash) 
         VALUES (%s, %s, %s, %s, %s, %s)"""
     
     values = (firstname, lastname, email, pwhash)
@@ -140,7 +140,7 @@ def update_customer():
     update_passwordhash = request_data['passwordhash']
 
     #used chatgpt to figure out how to update different parts of the record
-    query = "UPDATE books SET"
+    query = "UPDATE customers SET"
     values = []
 
     if update_firstname: 
