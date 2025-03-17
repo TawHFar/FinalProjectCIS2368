@@ -48,34 +48,36 @@ def add_book():
 
 
 #crud function to updating a book
-@app.route('/api/book/<int:id>', methods = ['PUT'])
-def update_book():
-    request_data = request.get_json()
-    book_id = request_data['id']
-    update_title = request_data['title']
-    update_author = request_data['author']
-    update_genre = request_data['genre']
-    update_status = request_data['status']
+@app.route('/api/books/<int:id>', methods = ['PUT'])
+def update_book(id):
+    request_data = request.get_json() #used chatgpt to use .get to return none of title is not provided 
+    update_title = request_data.get('title')
+    update_author = request_data.get('author')
+    update_genre = request_data.get('genre')
+    update_status = request_data.get('status')
 
     #used chatgpt to figure out how to update different parts of the record
     query = "UPDATE books SET"
     values = []
 
+    #used chatgpt to figure out errors in postman and lost set clause parts 
+    set_clauses = []
+
     if update_title: 
-        query += "title = %s"
+        set_clauses.append("title = %s")
         values.append(update_title)
     if update_author: 
-        query += "author = %s"
+        set_clauses.append("author = %s")
         values.append(update_author)
     if update_genre: 
-        query += "genre = %s"
+        set_clauses.append("genre = %s")
         values.append(update_genre)
     if update_status: 
-        query += "status = %s"
+        set_clauses.append("status = %s")
         values.append(update_status)
-    
-    query += "WHERE id = %s"
-    values.append(book_id)
+    #used chatgpt to fix spacing error 
+    query +=" "+", ".join(set_clauses) + " WHERE id = %s" #https://www.w3schools.com/python/ref_string_join.asp
+    values.append(id)
 
     execute_query(conn, query, tuple(values))
 
@@ -85,23 +87,21 @@ def update_book():
 def delete_book():
     request_data = request.get_json()
     book_id = request_data['id']
-    result = execute_read_query(conn, query, book_id)
-
+    query_check = "SELECT * FROM WHERE id = %s" #checks if book exist
+    result = execute_read_query(conn, query_check, (book_id,))
+#used chatgpt for error cheching 
     if not result:
         "Book not in inventory"
 
 
-    query = "SELECT  FROM books WHERE id = %s"
+    query = "DELETE FROM books WHERE id = %s"
     values = (book_id,)
 
     execute_query(conn, query, values)
     return "Books deleted succesfully"
 
 
-
-
-
-# Using class notes, use GET functipn to retrieve all barbells
+# Using class notes, use GET functipn to retrieve all customers
 @app.route('/api/customers', methods=['GET'])
 def get_customer():
     query = "SELECT * FROM customers"
@@ -109,7 +109,7 @@ def get_customer():
     return jsonify(customer)
 
 
-@app.route('/api/customer', methods=['POST'])
+@app.route('/api/customers', methods=['POST'])
 def add_customer():
 
     #Used the class note format to request the information
@@ -122,7 +122,7 @@ def add_customer():
 
     new_entry = """
         INSERT INTO customers (firstname, lastname, email, passwordhash) 
-        VALUES (%s, %s, %s, %s, %s, %s)"""
+        VALUES (%s, %s, %s, %s)"""
     
     values = (firstname, lastname, email, pwhash)
     
@@ -130,55 +130,58 @@ def add_customer():
 
     return "Profile added successfully"
 
-@app.route('/api/customer/<int:id>', methods = ['PUT'])
-def update_customer():
-    request_data = request.get_json()
-    cust_id = request_data['id']
-    update_firstname = request_data['firstname']
-    update_lastname = request_data['lastname']
-    update_email = request_data['email']
-    update_passwordhash = request_data['passwordhash']
+@app.route('/api/customers/<int:id>', methods = ['PUT'])
+def update_customer(id):
+    request_data = request.get_json() #used chatgpt to use .get to return none of title is not provided 
+    update_firstname = request_data.get('firstname')
+    update_lastname = request_data.get('lastname')
+    update_email = request_data.get('email')
+    update_pwhash = request_data.get('passwordhash')
 
     #used chatgpt to figure out how to update different parts of the record
-    query = "UPDATE customers SET"
+    query = "UPDATE books SET"
     values = []
 
+    #used chatgpt to figure out errors in postman and lost set clause parts 
+    set_clauses = []
+
     if update_firstname: 
-        query += "firstname = %s"
+        set_clauses.append("firstname = %s")
         values.append(update_firstname)
     if update_lastname: 
-        query += "lastname = %s"
+        set_clauses.append("lastname = %s")
         values.append(update_lastname)
     if update_email: 
-        query += "email = %s"
+        set_clauses.append("email = %s")
         values.append(update_email)
-    if update_passwordhash: 
-        query += "passwordhash = %s"
-        values.append(update_passwordhash)
-    
-    query += "WHERE id = %s"
-    values.append(cust_id)
+    if update_pwhash: 
+        set_clauses.append("passwordhash = %s")
+        values.append(update_pwhash)
+    #used chatgpt to fix spacing error 
+    query +=" "+", ".join(set_clauses) + " WHERE id = %s" #https://www.w3schools.com/python/ref_string_join.asp
+    values.append(id)
 
     execute_query(conn, query, tuple(values))
 
-    return "Customer Updated"
+    return "Book Updated"
 
 
-@app.route('/api/customer/delete', methods=['DELETE'])
-def delete_customer(id):
+@app.route('/api/customers/delete', methods=['DELETE'])
+def delete_customers():
     request_data = request.get_json()
-    customer_id = request_data['id']
-    result = execute_read_query(conn, query, customer_id)
-
+    cust_id = request_data['id']
+    query_check = "SELECT * FROM WHERE id = %s" #checks if customer exist
+    result = execute_read_query(conn, query_check, (cust_id,))
+#used chatgpt for error cheching 
     if not result:
-        "Customer does not exist"
+        "Profile not found"
 
 
-    query = "SELECT  FROM customers WHERE id = %s"
-    values = (id,)
+    query = "DELETE FROM customers WHERE id = %s"
+    values = (cust_id,)
 
     execute_query(conn, query, values)
-    return "Customer deleted succesfully"
+    return "Profile deleted succesfully"
 
 
 
@@ -219,7 +222,7 @@ def borrow_book():
 
     return "Book Borrowed Successfully!"
 
-@app.route('/return_date', methods =['PUT'])
+@app.route('/api/return_date', methods =['PUT'])
 def return_book(id):
     request_data = request.get_json()
     borrow_id = request_data['id']
