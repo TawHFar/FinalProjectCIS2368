@@ -36,13 +36,13 @@ def add_book():
     genre = request_data['genre']
     status = request_data['status']
 
-    new_entry = """
+    query = """
         INSERT INTO books (title, author, genre, status) 
-        VALUES (%s, %s, %s, %s)"""
+        VALUES (%s,%s,%s,%s)"""
     
     values = (title, author, genre, status)
     
-    execute_query(conn, new_entry, values)
+    execute_query(conn, query, values)
 
     return "Book added successfully"
 
@@ -225,7 +225,7 @@ def return_book(id):
     borrow_id = request_data['id']
     return_date_str = request_data['returndate']
 
-    return_date = datetime.strptime(return_date_str, '%Y-%m-%d')
+    return_date = datetime.strptime(return_date_str, '%Y-%m-%d') #https://www.geeksforgeeks.org/python-datetime-strptime-function/
 
     select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = {id}"
     borrow_result = execute_read_query(conn, select_query)
