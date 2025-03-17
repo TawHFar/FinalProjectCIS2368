@@ -40,7 +40,7 @@ def add_book():
         INSERT INTO books (title, author, genre, status) 
         VALUES (%s, %s, %s, %s)"""
     
-    values = (title, author, genre, status,)
+    values = (title, author, genre, status)
     
     execute_query(conn, new_entry, values)
 
