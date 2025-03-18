@@ -199,7 +199,7 @@ def borrow_book():
     check_query = execute_read_query(conn, book_query, book_value)
 #used chatgpt tp fix check query error
     if not check_query  or check_query[0]['status'] != 'Available':
-        return "Book Anavailable."
+        return "Book unavailable."
     
     #Checks if customer is in borrowing records and confirms if they are able to borrow book
     borrow_query = 'SELECT * FROM borrowingrecords WHERE customerid=%s AND returndate IS NULL'
