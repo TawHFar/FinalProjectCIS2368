@@ -260,7 +260,7 @@ def return_book(id):
     update_book_status = "UPDATE books SET status = 'Unavailable' WHERE id = %s"
     execute_query(conn, update_book_status,(book_id,))
 
-    return jsonify ({"Return Date updated"})
+    return "Return Date updated"
 
 # Using class notes, use GET function to retrieve borrowingrecord 
 @app.route('/api/borrowingrecords', methods=['GET'])

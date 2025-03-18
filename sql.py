@@ -40,6 +40,6 @@ def execute_read_query(connection,query, values= None):
          else:
             cursor.execute(query,values)
             result = cursor.fetchall()
-            return result      
+            return list(result)      
     except Error as e:
         print(f'The error {e} occured.')
