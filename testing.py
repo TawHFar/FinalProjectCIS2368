@@ -1,6 +1,6 @@
 import flask
 import cred
-import datetime
+from datetime import datetime
 from sql import create_connection
 from sql import execute_read_query
 from sql import execute_query #added this import to have access add and delete to query
@@ -21,7 +21,7 @@ conn = create_connection(myCreds.conString, myCreds.userName, myCreds.password, 
 def get_books():
     query = "SELECT * FROM books"
     book = execute_read_query(conn, query)
-    return jsonify(book)
+    return jsonify(list(book))
 
 
 #Using the class notes for the request data and used Chatgpt suggestion to
@@ -106,7 +106,7 @@ def delete_book():
 def get_customer():
     query = "SELECT * FROM customers"
     customer = execute_read_query(conn, query)
-    return jsonify(customer)
+    return jsonify(list(customer))
 
 
 @app.route('/api/customers', methods=['POST'])
@@ -118,7 +118,6 @@ def add_customer():
     lastname = request_data['lastname']
     email = request_data['email']
     pwhash = request_data['passwordhash']
-
 
     new_entry = """
         INSERT INTO customers (firstname, lastname, email, passwordhash) 
@@ -198,12 +197,12 @@ def borrow_book():
     book_query = 'SELECT status FROM books WHERE id=%s'
     book_value = (book_id,)
     check_query = execute_read_query(conn, book_query, book_value)
-
-    if check_query != 'available':
+#used chatgpt tp fix check query error
+    if not check_query  or check_query[0]['status'] != 'Available':
         return "Book unavailable."
     
     #Checks if customer is in borrowing records and confirms if they are able to borrow book
-    borrow_query = 'SELECT * FROM borrowingrecords WHERE customerid=%s AND returndate is NULL'
+    borrow_query = 'SELECT * FROM borrowingrecords WHERE customerid=%s AND returndate IS NULL'
     cust_value = (cust_id,)
     check_cust = execute_read_query(conn, borrow_query, cust_value)
 
@@ -211,12 +210,12 @@ def borrow_book():
         return "Customer has already borrowed a book."
     
     #Inserted information of the checkout 
-    new_borrowquery = """INSERT INTO borrowrecords (bookid,customerid,borrowdate) VALUES (%s,%s,%s)"""
+    new_borrowquery = """INSERT INTO borrowingrecords (bookid,customerid,borrowdate) VALUES (%s,%s,%s)"""
     new_values = (book_id,cust_id,format_date)
     execute_query(conn, new_borrowquery, new_values)
 
     #Upated book status
-    update_status = "UPDATE books SET status ='unavailable' WHERE id=%s"
+    update_status = "UPDATE books SET status ='Unavailable' WHERE id=%s"
     execute_query(conn,update_status,(book_id,))
 
     return "Book Borrowed Successfully!"
@@ -229,17 +228,23 @@ def return_book(id):
 
     return_date = datetime.strptime(return_date_str, '%Y-%m-%d') #https://www.geeksforgeeks.org/python-datetime-strptime-function/
 
-    select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = %s"
+    select_query = "SELECT borrowdate,bookid FROM borrowingrecords WHERE id = %s"
     borrow_result = execute_read_query(conn, select_query,(id,))
 
     if not borrow_result:
-        return jsonify({"Borrow record not found"})
+        return "Borrow record not found"
     
     borrow_date_str = borrow_result[0]['borrowdate']
-    borrow_date = datetime.strptime(borrow_date_str, '%Y-%m-%d')
-#calculate the difference in days 
-    day_difference = (return_date - borrow_date).days
+    book_id = borrow_result[0]['bookid']
 
+    if isinstance(borrow_date_str, str):#https://www.w3schools.com/python/ref_func_isinstance.asp
+        borrow_date = datetime.strptime(borrow_date_str, '%Y-%m-%d')
+    else:
+        borrow_date = borrow_date_str
+#calculate the difference in days 
+    return_date = return_date.date() #used chatgpt to fix this error 
+
+    day_difference = (return_date - borrow_date).days
     late_fee = 0
     if day_difference > 10: 
         late_fee = day_difference - 10
@@ -251,6 +256,17 @@ def return_book(id):
     """
     execute_query(conn, update_query,(return_date_str,late_fee,id))
 
+    #update book status 
+    update_book_status = "UPDATE books SET status = 'Unavailable' WHERE id = %s"
+    execute_query(conn, update_book_status,(book_id,))
+
     return jsonify ({"Return Date updated"})
+
+# Using class notes, use GET function to retrieve borrowingrecord 
+@app.route('/api/borrowingrecords', methods=['GET'])
+def get_records():
+    query = "SELECT * FROM borrowingrecords"
+    records = execute_read_query(conn, query)
+    return jsonify(records)
 
 app.run()
