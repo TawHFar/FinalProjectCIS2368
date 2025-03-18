@@ -204,25 +204,24 @@ def borrow_book():
     
     #Checks if customer is in borrowing records and confirms if they are able to borrow book
     borrow_query = 'SELECT * FROM borrowingrecords WHERE customerid=%s AND returndate is NULL'
-    cust_value = (cust_id)
+    cust_value = (cust_id,)
     check_cust = execute_read_query(conn, borrow_query, cust_value)
 
     if check_cust:
         return "Customer has already borrowed a book."
     
     #Inserted information of the checkout 
-    new_borrowquery = """INSERT INTO borrowrecords (bookid,custimerid,borrowdate) VALUES %s,%s,%s"""
+    new_borrowquery = """INSERT INTO borrowrecords (bookid,customerid,borrowdate) VALUES (%s,%s,%s)"""
     new_values = (book_id,cust_id,format_date)
     execute_query(conn, new_borrowquery, new_values)
 
     #Upated book status
     update_status = "UPDATE books SET status ='unavailable' WHERE id=%s"
-    new_values = (book_id,)
-    execute_query(conn,update_status,new_values)
+    execute_query(conn,update_status,(book_id,))
 
     return "Book Borrowed Successfully!"
 
-@app.route('/api/return_date', methods =['PUT'])
+@app.route('/api/return_date/<int:id>', methods =['PUT'])
 def return_book(id):
     request_data = request.get_json()
     borrow_id = request_data['id']
@@ -230,13 +229,13 @@ def return_book(id):
 
     return_date = datetime.strptime(return_date_str, '%Y-%m-%d') #https://www.geeksforgeeks.org/python-datetime-strptime-function/
 
-    select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = {id}"
-    borrow_result = execute_read_query(conn, select_query)
+    select_query = "SELECT borrowdate FROM borrowingrecords WHERE id = %s"
+    borrow_result = execute_read_query(conn, select_query,(id,))
 
     if not borrow_result:
         return jsonify({"Borrow record not found"})
     
-    borrow_date_str = borrow_date[0]['borrowdate']
+    borrow_date_str = borrow_result[0]['borrowdate']
     borrow_date = datetime.strptime(borrow_date_str, '%Y-%m-%d')
 #calculate the difference in days 
     day_difference = (return_date - borrow_date).days
@@ -245,12 +244,12 @@ def return_book(id):
     if day_difference > 10: 
         late_fee = day_difference - 10
 
-    update_query  =f""" 
+    update_query  =""" 
     UPDATE borrowingrecords 
-    SET returndate = '{return_date_str}', latefee = {late_fee}
-    WHERE id  = {id}
+    SET returndate = %s, late_fee = %s
+    WHERE id  = %s
     """
-    execute_query(conn, update_query)
+    execute_query(conn, update_query,(return_date_str,late_fee,id))
 
     return jsonify ({"Return Date updated"})
 
